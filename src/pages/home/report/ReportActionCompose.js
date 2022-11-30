@@ -61,6 +61,9 @@ const propTypes = {
     /** The ID of the report actions will be created for */
     reportID: PropTypes.string.isRequired,
 
+    /** Callback fired when a file is attached to the report so we can display the confirmation modal */
+    displayFileInModal: PropTypes.func.isRequired,
+
     /** Details about any modals being used */
     modal: PropTypes.shape({
         /** Indicates if there is a modal currently visible or not */
@@ -127,7 +130,6 @@ class ReportActionCompose extends React.Component {
         this.setTextInputRef = this.setTextInputRef.bind(this);
         this.getInputPlaceholder = this.getInputPlaceholder.bind(this);
         this.getIOUOptions = this.getIOUOptions.bind(this);
-        this.addAttachment = this.addAttachment.bind(this);
 
         this.comment = props.comment;
         this.shouldFocusInputOnScreenFocus = canFocusInputOnScreenFocus();
@@ -461,15 +463,6 @@ class ReportActionCompose extends React.Component {
     }
 
     /**
-     * @param {Object} file
-     */
-    addAttachment(file) {
-        const comment = this.prepareCommentAndResetComposer();
-        Report.addAttachment(this.props.reportID, file, comment);
-        this.setTextInputShouldClear(false);
-    }
-
-    /**
      * Add a new comment to this chat
      *
      * @param {SyntheticEvent} [e]
@@ -529,141 +522,134 @@ class ReportActionCompose extends React.Component {
                     hasExceededMaxCommentLength && styles.borderColorDanger,
                 ]}
                 >
-                    <AttachmentModal
-                        headerTitle={this.props.translate('reportActionCompose.sendAttachment')}
-                        onConfirm={this.addAttachment}
-                    >
-                        {({displayFileInModal}) => (
-                            <>
-                                <AttachmentPicker>
-                                    {({openPicker}) => (
-                                        <>
-                                            <View style={[
-                                                styles.dFlex, styles.flexColumn,
-                                                (this.state.isFullComposerAvailable || this.props.isComposerFullSize) ? styles.justifyContentBetween : styles.justifyContentEnd,
-                                            ]}
+                    <>
+                        <AttachmentPicker>
+                            {({openPicker}) => (
+                                <>
+                                    <View style={[
+                                        styles.dFlex, styles.flexColumn,
+                                        (this.state.isFullComposerAvailable || this.props.isComposerFullSize) ? styles.justifyContentBetween : styles.justifyContentEnd,
+                                    ]}
+                                    >
+                                        {this.props.isComposerFullSize && (
+                                            <Tooltip text={this.props.translate('reportActionCompose.collapse')}>
+                                                <TouchableOpacity
+                                                    onPress={(e) => {
+                                                        e.preventDefault();
+                                                        Report.setIsComposerFullSize(this.props.reportID, false);
+                                                    }}
+                                                    style={styles.composerSizeButton}
+                                                    underlayColor={themeColors.componentBG}
+                                                    disabled={isBlockedFromConcierge}
+                                                >
+                                                    <Icon src={Expensicons.Collapse} />
+                                                </TouchableOpacity>
+                                            </Tooltip>
+
+                                        )}
+                                        {(!this.props.isComposerFullSize && this.state.isFullComposerAvailable) && (
+                                            <Tooltip text={this.props.translate('reportActionCompose.expand')}>
+                                                <TouchableOpacity
+                                                    onPress={(e) => {
+                                                        e.preventDefault();
+                                                        Report.setIsComposerFullSize(this.props.reportID, true);
+                                                    }}
+                                                    style={styles.composerSizeButton}
+                                                    underlayColor={themeColors.componentBG}
+                                                    disabled={isBlockedFromConcierge}
+                                                >
+                                                    <Icon src={Expensicons.Expand} />
+                                                </TouchableOpacity>
+                                            </Tooltip>
+                                        )}
+                                        <Tooltip text={this.props.translate('reportActionCompose.addAction')}>
+                                            <TouchableOpacity
+                                                onPress={(e) => {
+                                                    e.preventDefault();
+                                                    this.setMenuVisibility(true);
+                                                }}
+                                                style={styles.chatItemAttachButton}
+                                                underlayColor={themeColors.componentBG}
+                                                disabled={isBlockedFromConcierge}
                                             >
-                                                {this.props.isComposerFullSize && (
-                                                    <Tooltip text={this.props.translate('reportActionCompose.collapse')}>
-                                                        <TouchableOpacity
-                                                            onPress={(e) => {
-                                                                e.preventDefault();
-                                                                Report.setIsComposerFullSize(this.props.reportID, false);
-                                                            }}
-                                                            style={styles.composerSizeButton}
-                                                            underlayColor={themeColors.componentBG}
-                                                            disabled={isBlockedFromConcierge}
-                                                        >
-                                                            <Icon src={Expensicons.Collapse} />
-                                                        </TouchableOpacity>
-                                                    </Tooltip>
-
-                                                )}
-                                                {(!this.props.isComposerFullSize && this.state.isFullComposerAvailable) && (
-                                                    <Tooltip text={this.props.translate('reportActionCompose.expand')}>
-                                                        <TouchableOpacity
-                                                            onPress={(e) => {
-                                                                e.preventDefault();
-                                                                Report.setIsComposerFullSize(this.props.reportID, true);
-                                                            }}
-                                                            style={styles.composerSizeButton}
-                                                            underlayColor={themeColors.componentBG}
-                                                            disabled={isBlockedFromConcierge}
-                                                        >
-                                                            <Icon src={Expensicons.Expand} />
-                                                        </TouchableOpacity>
-                                                    </Tooltip>
-                                                )}
-                                                <Tooltip text={this.props.translate('reportActionCompose.addAction')}>
-                                                    <TouchableOpacity
-                                                        onPress={(e) => {
-                                                            e.preventDefault();
-                                                            this.setMenuVisibility(true);
-                                                        }}
-                                                        style={styles.chatItemAttachButton}
-                                                        underlayColor={themeColors.componentBG}
-                                                        disabled={isBlockedFromConcierge}
-                                                    >
-                                                        <Icon src={Expensicons.Plus} />
-                                                    </TouchableOpacity>
-                                                </Tooltip>
-                                            </View>
-                                            <PopoverMenu
-                                                animationInTiming={CONST.ANIMATION_IN_TIMING}
-                                                isVisible={this.state.isMenuVisible}
-                                                onClose={() => this.setMenuVisibility(false)}
-                                                onItemSelected={() => this.setMenuVisibility(false)}
-                                                anchorPosition={styles.createMenuPositionReportActionCompose}
-                                                menuItems={[...this.getIOUOptions(reportParticipants),
-                                                    {
-                                                        icon: Expensicons.Paperclip,
-                                                        text: this.props.translate('reportActionCompose.addAttachment'),
-                                                        onSelected: () => {
-                                                            openPicker({
-                                                                onPicked: displayFileInModal,
-                                                            });
-                                                        },
-                                                    },
-                                                ]}
-                                            />
-                                        </>
-                                    )}
-                                </AttachmentPicker>
-                                <View style={styles.textInputComposeSpacing}>
-                                    <Composer
-                                        autoFocus={!this.props.modal.isVisible && (this.shouldFocusInputOnScreenFocus || this.isEmptyChat())}
-                                        multiline
-                                        ref={this.setTextInputRef}
-                                        textAlignVertical="top"
-                                        placeholder={inputPlaceholder}
-                                        placeholderTextColor={themeColors.placeholderText}
-                                        onChangeText={comment => this.updateComment(comment, true)}
-                                        onKeyPress={this.triggerHotkeyActions}
-                                        onDragEnter={(e, isOriginComposer) => {
-                                            if (!isOriginComposer) {
-                                                return;
-                                            }
-
-                                            this.setState({isDraggingOver: true});
-                                        }}
-                                        onDragOver={(e, isOriginComposer) => {
-                                            if (!isOriginComposer) {
-                                                return;
-                                            }
-
-                                            this.setState({isDraggingOver: true});
-                                        }}
-                                        onDragLeave={() => this.setState({isDraggingOver: false})}
-                                        onDrop={(e) => {
-                                            e.preventDefault();
-
-                                            const file = lodashGet(e, ['dataTransfer', 'files', 0]);
-                                            if (!file) {
-                                                return;
-                                            }
-
-                                            displayFileInModal(file);
-                                            this.setState({isDraggingOver: false});
-                                        }}
-                                        style={[styles.textInputCompose, this.props.isComposerFullSize ? styles.textInputFullCompose : styles.flex4]}
-                                        maxLines={this.state.maxLines}
-                                        onFocus={() => this.setIsFocused(true)}
-                                        onBlur={() => this.setIsFocused(false)}
-                                        onPasteFile={displayFileInModal}
-                                        shouldClear={this.state.textInputShouldClear}
-                                        onClear={() => this.setTextInputShouldClear(false)}
-                                        isDisabled={isComposeDisabled || isBlockedFromConcierge}
-                                        selection={this.state.selection}
-                                        onSelectionChange={this.onSelectionChange}
-                                        isFullComposerAvailable={this.state.isFullComposerAvailable}
-                                        setIsFullComposerAvailable={this.setIsFullComposerAvailable}
-                                        isComposerFullSize={this.props.isComposerFullSize}
-                                        value={this.state.value}
+                                                <Icon src={Expensicons.Plus} />
+                                            </TouchableOpacity>
+                                        </Tooltip>
+                                    </View>
+                                    <PopoverMenu
+                                        animationInTiming={CONST.ANIMATION_IN_TIMING}
+                                        isVisible={this.state.isMenuVisible}
+                                        onClose={() => this.setMenuVisibility(false)}
+                                        onItemSelected={() => this.setMenuVisibility(false)}
+                                        anchorPosition={styles.createMenuPositionReportActionCompose}
+                                        menuItems={[...this.getIOUOptions(reportParticipants),
+                                            {
+                                                icon: Expensicons.Paperclip,
+                                                text: this.props.translate('reportActionCompose.addAttachment'),
+                                                onSelected: () => {
+                                                    openPicker({
+                                                        onPicked: this.props.displayFileInModal,
+                                                    });
+                                                },
+                                            },
+                                        ]}
                                     />
-                                </View>
-                            </>
-                        )}
-                    </AttachmentModal>
+                                </>
+                            )}
+                        </AttachmentPicker>
+                        <View style={styles.textInputComposeSpacing}>
+                            <Composer
+                                autoFocus={!this.props.modal.isVisible && (this.shouldFocusInputOnScreenFocus || this.isEmptyChat())}
+                                multiline
+                                ref={this.setTextInputRef}
+                                textAlignVertical="top"
+                                placeholder={inputPlaceholder}
+                                placeholderTextColor={themeColors.placeholderText}
+                                onChangeText={comment => this.updateComment(comment, true)}
+                                onKeyPress={this.triggerHotkeyActions}
+                                onDragEnter={(e, isOriginComposer) => {
+                                    if (!isOriginComposer) {
+                                        return;
+                                    }
+
+                                    this.setState({isDraggingOver: true});
+                                }}
+                                onDragOver={(e, isOriginComposer) => {
+                                    if (!isOriginComposer) {
+                                        return;
+                                    }
+
+                                    this.setState({isDraggingOver: true});
+                                }}
+                                onDragLeave={() => this.setState({isDraggingOver: false})}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+
+                                    const file = lodashGet(e, ['dataTransfer', 'files', 0]);
+                                    if (!file) {
+                                        return;
+                                    }
+
+                                    this.props.displayFileInModal(file);
+                                    this.setState({isDraggingOver: false});
+                                }}
+                                style={[styles.textInputCompose, this.props.isComposerFullSize ? styles.textInputFullCompose : styles.flex4]}
+                                maxLines={this.state.maxLines}
+                                onFocus={() => this.setIsFocused(true)}
+                                onBlur={() => this.setIsFocused(false)}
+                                onPasteFile={this.props.displayFileInModal}
+                                shouldClear={this.state.textInputShouldClear}
+                                onClear={() => this.setTextInputShouldClear(false)}
+                                isDisabled={isComposeDisabled || isBlockedFromConcierge}
+                                selection={this.state.selection}
+                                onSelectionChange={this.onSelectionChange}
+                                isFullComposerAvailable={this.state.isFullComposerAvailable}
+                                setIsFullComposerAvailable={this.setIsFullComposerAvailable}
+                                isComposerFullSize={this.props.isComposerFullSize}
+                                value={this.state.value}
+                            />
+                        </View>
+                    </>
                     {canUseTouchScreen() && this.props.isMediumScreenWidth ? null : (
                         <EmojiPickerButton
                             isDisabled={isBlockedFromConcierge}

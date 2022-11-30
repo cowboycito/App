@@ -32,6 +32,9 @@ const propTypes = {
     /** Callback fired when the comment is submitted */
     onSubmitComment: PropTypes.func.isRequired,
 
+    /** Callback fired when a file is attached to the report so we can display the confirmation modal */
+    displayFileInModal: PropTypes.func.isRequired,
+
     /** Any errors associated with an attempt to create a chat */
     // eslint-disable-next-line react/forbid-prop-types
     errors: PropTypes.object,
@@ -42,6 +45,11 @@ const propTypes = {
     /** Whether the composer input should be shown */
     shouldShowComposeInput: PropTypes.bool,
 
+    reportActionComposeRef: PropTypes.oneOfType([
+        PropTypes.func,
+        PropTypes.shape({current: PropTypes.instanceOf(React.Component)}),
+    ]),
+
     ...windowDimensionsPropTypes,
 };
 
@@ -49,6 +57,7 @@ const defaultProps = {
     shouldShowComposeInput: true,
     errors: {},
     pendingAction: null,
+    reportActionComposeRef: null,
 };
 
 class ReportFooter extends React.Component {
@@ -94,6 +103,8 @@ class ReportFooter extends React.Component {
                                 contentContainerStyle={this.props.isComposerFullSize ? styles.flex1 : {}}
                             >
                                 <ReportActionCompose
+                                    ref={this.props.reportActionComposeRef}
+                                    displayFileInModal={this.props.displayFileInModal}
                                     onSubmit={this.props.onSubmitComment}
                                     reportID={this.props.report.reportID.toString()}
                                     reportActions={this.props.reportActions}

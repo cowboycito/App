@@ -38,6 +38,8 @@
 		E9DF872D2525201700607FDC /* AirshipConfig.plist in Resources */ = {isa = PBXBuildFile; fileRef = E9DF872C2525201700607FDC /* AirshipConfig.plist */; };
 		ED814D34526B415CAFA0451E /* GTAmericaExpMono-BdIt.otf in Resources */ = {isa = PBXBuildFile; fileRef = 3981452A2C7340EBBA2B9BD1 /* GTAmericaExpMono-BdIt.otf */; };
 		F0C450EA2705020500FD2970 /* colors.json in Resources */ = {isa = PBXBuildFile; fileRef = F0C450E92705020500FD2970 /* colors.json */; };
+		FCDA038F291A7D180097FDF8 /* FileDroppableViewManager.m in Sources */ = {isa = PBXBuildFile; fileRef = FCDA038E291A7D180097FDF8 /* FileDroppableViewManager.m */; };
+		FCDA0392291A7D400097FDF8 /* FileDroppableView.m in Sources */ = {isa = PBXBuildFile; fileRef = FCDA0391291A7D400097FDF8 /* FileDroppableView.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -102,6 +104,9 @@
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		ED2971642150620600B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS12.0.sdk/System/Library/Frameworks/JavaScriptCore.framework; sourceTree = DEVELOPER_DIR; };
 		F0C450E92705020500FD2970 /* colors.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; name = colors.json; path = ../colors.json; sourceTree = "<group>"; };
+		FCDA038E291A7D180097FDF8 /* FileDroppableViewManager.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FileDroppableViewManager.m; sourceTree = "<group>"; };
+		FCDA0390291A7D400097FDF8 /* FileDroppableView.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = FileDroppableView.h; sourceTree = "<group>"; };
+		FCDA0391291A7D400097FDF8 /* FileDroppableView.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = FileDroppableView.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +149,7 @@
 		13B07FAE1A68108700A75B9A /* NewExpensify */ = {
 			isa = PBXGroup;
 			children = (
+				FCDA038D291A7CE50097FDF8 /* FileDroppableView */,
 				0F5BE0CD252686320097D869 /* GoogleService-Info.plist */,
 				E9DF872C2525201700607FDC /* AirshipConfig.plist */,
 				0CDA8E36287DD6A0004ECBEC /* Images.xcassets */,
@@ -246,6 +252,16 @@
 				01B491F27448B52C69E394BB /* Pods-NewExpensify-NewExpensifyTests.release.xcconfig */,
 			);
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		FCDA038D291A7CE50097FDF8 /* FileDroppableView */ = {
+			isa = PBXGroup;
+			children = (
+				FCDA038E291A7D180097FDF8 /* FileDroppableViewManager.m */,
+				FCDA0390291A7D400097FDF8 /* FileDroppableView.h */,
+				FCDA0391291A7D400097FDF8 /* FileDroppableView.m */,
+			);
+			path = FileDroppableView;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -604,7 +620,9 @@
 				18D050E0262400AF000D658B /* BridgingFile.swift in Sources */,
 				0F5E5350263B73FD004CA14F /* EnvironmentChecker.m in Sources */,
 				374FB8D728A133FE000D84EF /* OriginImageRequestHandler.mm in Sources */,
+				FCDA0392291A7D400097FDF8 /* FileDroppableView.m in Sources */,
 				7041848526A8E47D00E09F4D /* RCTStartupTimer.m in Sources */,
+				FCDA038F291A7D180097FDF8 /* FileDroppableViewManager.m in Sources */,
 				DD79042B2792E76D004484B4 /* RCTBootSplash.m in Sources */,
 				0CDA8E34287DD650004ECBEC /* AppDelegate.mm in Sources */,
 				13B07FC11A68108700A75B9A /* main.m in Sources */,
@@ -766,7 +784,7 @@
 				COPY_PHASE_STRIP = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = i386;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -791,6 +809,7 @@
 				);
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 			};
 			name = Debug;
@@ -827,7 +846,7 @@
 				COPY_PHASE_STRIP = YES;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
+				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = i386;
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -844,6 +863,7 @@
 					"\"$(inherited)\"",
 				);
 				MTL_ENABLE_DEBUG_INFO = NO;
+				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				VALIDATE_PRODUCT = YES;
 			};

@@ -32,6 +32,8 @@ import withLocalize from '../../components/withLocalize';
 import reportPropTypes from '../reportPropTypes';
 import FullPageNotFoundView from '../../components/BlockingViews/FullPageNotFoundView';
 import ReportHeaderSkeletonView from '../../components/ReportHeaderSkeletonView';
+import AttachmentModal from '../../components/AttachmentModal';
+import FileDroppableView from '../../components/FileDroppableView';
 
 const propTypes = {
     /** Navigation route context info provided by react navigation */
@@ -106,6 +108,7 @@ class ReportScreen extends React.Component {
     constructor(props) {
         super(props);
 
+        this.addAttachment = this.addAttachment.bind(this);
         this.onSubmitComment = this.onSubmitComment.bind(this);
         this.updateViewportOffsetTop = this.updateViewportOffsetTop.bind(this);
         this.chatWithAccountManager = this.chatWithAccountManager.bind(this);
@@ -191,6 +194,18 @@ class ReportScreen extends React.Component {
         Navigation.navigate(ROUTES.getReportRoute(this.props.accountManagerReportID));
     }
 
+    /**
+     * @param {Object} file
+     */
+    addAttachment(file) {
+        const comment = this.reportActionCompose.prepareCommentAndResetComposer();
+
+        const reportID = getReportID(this.props.route);
+        Report.addAttachment(reportID, file, comment);
+
+        this.reportActionCompose.setTextInputShouldClear(false);
+    }
+
     render() {
         if (!this.props.isSidebarLoaded || _.isEmpty(this.props.personalDetails)) {
             return null;
@@ -267,52 +282,89 @@ class ReportScreen extends React.Component {
                                 shouldShowCloseButton
                             />
                         )}
-                        <View
-                            nativeID={CONST.REPORT.DROP_NATIVE_ID}
-                            style={[styles.flex1, styles.justifyContentEnd, styles.overflowHidden]}
-                            onLayout={(event) => {
-                                const skeletonViewContainerHeight = event.nativeEvent.layout.height;
-
-                                // The height can be 0 if the component unmounts - we are not interested in this value and want to know how much space it
-                                // takes up so we can set the skeleton view container height.
-                                if (skeletonViewContainerHeight === 0) {
-                                    return;
-                                }
-
-                                reportActionsListViewHeight = skeletonViewContainerHeight;
-                                this.setState({skeletonViewContainerHeight});
-                            }}
+                        <AttachmentModal
+                            headerTitle={this.props.translate('reportActionCompose.sendAttachment')}
+                            onConfirm={this.addAttachment}
                         >
-                            {this.isReportReadyForDisplay() && (
-                                <ReportActionsView
-                                    reportActions={this.props.reportActions}
-                                    report={this.props.report}
-                                    session={this.props.session}
-                                    isComposerFullSize={this.props.isComposerFullSize}
-                                    isDrawerOpen={this.props.isDrawerOpen}
-                                    parentViewHeight={this.state.skeletonViewContainerHeight}
-                                />
-                            )}
+                            {({displayFileInModal}) => (
+                                <FileDroppableView
+                                    style={styles.flex1}
+                                    onDrop={(event) => {
+                                        // TODO: create file info structure in native code
+                                        // with file name, uri and size
+                                        if (event.files && event.files.length > 0) {
+                                            const file = event.files[0];
+                                            const splittedPath = file.split('/');
+                                            const fileName = splittedPath[splittedPath.length - 1];
 
-                            {/* Note: The report should be allowed to mount even if the initial report actions are not loaded. If we prevent rendering the report while they are loading then
-                            we'll unnecessarily unmount the ReportActionsView which will clear the new marker lines initial state. */}
-                            {(!this.isReportReadyForDisplay() || isLoadingInitialReportActions) && (
-                                <ReportActionsSkeletonView
-                                    containerHeight={this.state.skeletonViewContainerHeight}
-                                />
+                                            const fileInfo = {
+                                                name: fileName,
+                                                source: file,
+                                                uri: file,
+                                                size: 241,
+                                            };
+                                            displayFileInModal(fileInfo);
+                                        }
+
+                                        return undefined;
+                                    }}
+                                >
+                                    <View
+                                        nativeID={CONST.REPORT.DROP_NATIVE_ID}
+                                        style={[styles.flex1, styles.justifyContentEnd, styles.overflowHidden]}
+                                        onLayout={(event) => {
+                                            const skeletonViewContainerHeight = event.nativeEvent.layout.height;
+
+                                            // The height can be 0 if the component unmounts - we are not interested in this value and want to know how much space it
+                                            // takes up so we can set the skeleton view container height.
+                                            if (skeletonViewContainerHeight === 0) {
+                                                return;
+                                            }
+
+                                            reportActionsListViewHeight = skeletonViewContainerHeight;
+                                            this.setState({skeletonViewContainerHeight});
+                                        }}
+                                    >
+                                        {this.isReportReadyForDisplay() && (
+                                            <ReportActionsView
+                                                reportActions={this.props.reportActions}
+                                                report={this.props.report}
+                                                session={this.props.session}
+                                                isComposerFullSize={this.props.isComposerFullSize}
+                                                isDrawerOpen={this.props.isDrawerOpen}
+                                                parentViewHeight={this.state.skeletonViewContainerHeight}
+                                            />
+                                        )}
+
+                                        {/* Note: The report should be allowed to mount even if the
+                                        initial report actions are not loaded. If we prevent rendering
+                                        the report while they are loading then we'll unnecessarily
+                                        unmount the ReportActionsView which will clear the new marker
+                                        lines initial state. */}
+                                        {(!this.isReportReadyForDisplay() || isLoadingInitialReportActions) && (
+                                            <ReportActionsSkeletonView
+                                                containerHeight={this.state.skeletonViewContainerHeight}
+                                            />
+                                        )}
+                                        {this.isReportReadyForDisplay() && !isLoadingInitialReportActions && (
+                                            <ReportFooter
+                                                reportActionComposeRef={(el) => {
+                                                    this.reportActionCompose = el;
+                                                }}
+                                                displayFileInModal={displayFileInModal}
+                                                errors={addWorkspaceRoomOrChatErrors}
+                                                pendingAction={addWorkspaceRoomOrChatPendingAction}
+                                                isOffline={this.props.network.isOffline}
+                                                reportActions={this.props.reportActions}
+                                                report={this.props.report}
+                                                isComposerFullSize={this.props.isComposerFullSize}
+                                                onSubmitComment={this.onSubmitComment}
+                                            />
+                                        )}
+                                    </View>
+                                </FileDroppableView>
                             )}
-                            {this.isReportReadyForDisplay() && !isLoadingInitialReportActions && (
-                                <ReportFooter
-                                    errors={addWorkspaceRoomOrChatErrors}
-                                    pendingAction={addWorkspaceRoomOrChatPendingAction}
-                                    isOffline={this.props.network.isOffline}
-                                    reportActions={this.props.reportActions}
-                                    report={this.props.report}
-                                    isComposerFullSize={this.props.isComposerFullSize}
-                                    onSubmitComment={this.onSubmitComment}
-                                />
-                            )}
-                        </View>
+                        </AttachmentModal>
                     </FullPageNotFoundView>
                 </ScreenWrapper>
             </Freeze>
